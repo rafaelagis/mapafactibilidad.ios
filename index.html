@@ -1,32 +1,32 @@
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
     <title>Mapa de Catastro</title>
-    <!-- 1. LIBRERÍAS (URLs COMPLETAS) -->
+    
+    <!-- 1. CARGA DE LIBRERÍAS (URLs COMPLETAS Y CORRECTAS) -->
     <link rel="stylesheet" href="https://unpkg.com" />
     <script src="https://unpkg.com"></script>
     <script src="https://cloudflare.com"></script>
     
     <style>
-        body { margin: 0; }
+        body { margin: 0; padding: 0; }
         #mapa { height: 100vh; width: 100%; }
     </style>
 </head>
 <body> 
     <div id="mapa"></div>
 
-    <script type="text/javascript">
-        // 2. INICIALIZAMOS EL MAPA (Con Canvas para los 40k puntos)
+    <script>
+        // 2. INICIALIZAMOS EL MAPA (Se usa 'L' después de cargar el script arriba)
         var mimapa = L.map('mapa', { preferCanvas: true }).setView([-31.255, -61.49], 14);
 
-        // MAPA BASE DE IGN (URL COMPLETA)
         L.tileLayer('https://ign.gob.ar{z}/{x}/{-y}.png', {
-            attribution: 'IGN Argentina',
-            maxZoom: 20
+            attribution: 'IGN Argentina'
         }).addTo(mimapa);
 
         // 3. URL DEL CSV DE GOOGLE
-        const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
+        const urlCSV = "https://google.com";
 
         // 4. PROCESAR PUNTOS
         Papa.parse(urlCSV, {
@@ -34,6 +34,7 @@
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
+                console.log("Datos cargados: ", results.data.length);
                 results.data.forEach(function(fila) {
                     let lat = parseFloat(fila.ycoord);
                     let lng = parseFloat(fila.xcoord);
@@ -47,7 +48,7 @@
                             fillOpacity: 0.7
                         })
                         .addTo(mimapa)
-                        .bindPopup("Catastro: " + fila.catastro);
+                        .bindPopup("Catastro: " + (fila.catastro || "Sin dato"));
                     }
                 });
             }
@@ -55,4 +56,3 @@
     </script>
 </body>
 </html>
-
