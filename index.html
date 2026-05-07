@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="utf-8" />
-    <title>Mapa de Catastro - 40k Puntos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Factibilidad</title>
     
-    <!-- 1. Cargamos Leaflet (CSS y JS) -->
-    <link rel="stylesheet" href="https://unpkg.com" />
-    <script src="https://unpkg.com"></script>
-    
-    <!-- 2. Cargamos PapaParse para leer el CSV de Google -->
-    <script src="https://cloudflare.com"></script>
+    <!-- 1. LIBRERÍAS EXTERNAS (Con protocolos de seguridad corregidos) -->
+    <link rel="stylesheet" href="https://unpkg.com" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cloudflare.com" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
     <style>
         body { margin: 0; padding: 0; }
-        #mapa { height: 100vh; width: 100%; background: #f0f0f0; }
+        #mapa { height: 100vh; width: 100%; background: #ffffff; }
     </style>
 </head>
 <body> 
@@ -21,52 +20,53 @@
     <div id="mapa"></div>
 
     <script type="text/javascript">
-        // Inicializamos el mapa con preferCanvas: true para soportar miles de puntos
-        var mimapa = L.map('mapa', { 
-            preferCanvas: true 
-        }).setView([-31.255, -61.49], 14);
+        // Esta función espera a que todas las librerías se carguen para evitar el "L is not defined"
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // 2. INICIALIZAR MAPA
+            var mimapa = L.map('mapa', { 
+                preferCanvas: true // CRÍTICO para los 40.000 puntos
+            }).setView([-31.255, -61.49], 14);
 
-        // Agregamos el mapa base del Instituto Geográfico Nacional
-        L.tileLayer('https://ign.gob.ar{z}/{x}/{-y}.png', {
-            attribution: 'IGN Argentina',
-            maxZoom: 20
-        }).addTo(mimapa);
+            // 3. CAPA BASE IGN
+            L.tileLayer('https://ign.gob.ar{z}/{x}/{-y}.png', {
+                attribution: 'IGN Argentina',
+                maxZoom: 20
+            }).addTo(mimapa);
 
-        // URL DE TU GOOGLE SHEETS (Publicado como CSV)
-        const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
+            // 4. CARGA DE DATOS DESDE TU GOOGLE SHEET
+            const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
 
-        // Función para cargar y dibujar los puntos
-        Papa.parse(urlCSV, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: true,
-            complete: function(results) {
-                console.log("Total de filas leídas: ", results.data.length);
-                
-                results.data.forEach(function(fila) {
-                    // Extraemos coordenadas usando los nombres de tus columnas
-                    let lat = parseFloat(fila.ycoord);
-                    let lng = parseFloat(fila.xcoord);
-                    let datoCatastro = fila.catastro || "Sin datos";
-
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        // Dibujamos un círculo pequeño (más rápido que un marcador común)
-                        L.circleMarker([lat, lng], {
-                            radius: 2,
-                            fillColor: "#ff7800", // Color naranja
-                            color: "#000",
-                            weight: 0.5,
-                            fillOpacity: 0.7
-                        })
-                        .addTo(mimapa)
-                        .bindPopup("<b>Catastro:</b> " + datoCatastro);
-                    }
-                });
-            },
-            error: function(err) {
-                console.error("Error al cargar el CSV de Google:", err);
-            }
+            Papa.parse(urlCSV, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    console.log("Cargando puntos:", results.data.length);
+                    
+                    results.data.forEach(function(fila) {
+                        // Mapeo de tus columnas xcoord e ycoord
+                        let lat = parseFloat(fila.ycoord);
+                        let lng = parseFloat(fila.xcoord);
+                        
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            L.circleMarker([lat, lng], {
+                                radius: 2.5,
+                                fillColor: "#ff4d00",
+                                color: "#ffffff",
+                                weight: 0.5,
+                                fillOpacity: 0.8
+                            })
+                            .addTo(mimapa)
+                            .bindPopup("<b>Catastro:</b> " + (fila.catastro || "S/D"));
+                        }
+                    });
+                },
+                error: function(err) {
+                    console.error("Error al cargar Google Sheets:", err);
+                }
+            });
         });
     </script>
 </body>
