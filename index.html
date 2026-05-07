@@ -2,57 +2,73 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Mapa de Catastro</title>
+    <title>Mapa de Catastro - 40k Puntos</title>
     
-    <!-- 1. CARGA DE LIBRERÍAS (URLs COMPLETAS Y CORRECTAS) -->
+    <!-- 1. Cargamos Leaflet (CSS y JS) -->
     <link rel="stylesheet" href="https://unpkg.com" />
     <script src="https://unpkg.com"></script>
+    
+    <!-- 2. Cargamos PapaParse para leer el CSV de Google -->
     <script src="https://cloudflare.com"></script>
     
     <style>
         body { margin: 0; padding: 0; }
-        #mapa { height: 100vh; width: 100%; }
+        #mapa { height: 100vh; width: 100%; background: #f0f0f0; }
     </style>
 </head>
 <body> 
+
     <div id="mapa"></div>
 
-    <script>
-        // 2. INICIALIZAMOS EL MAPA (Se usa 'L' después de cargar el script arriba)
-        var mimapa = L.map('mapa', { preferCanvas: true }).setView([-31.255, -61.49], 14);
+    <script type="text/javascript">
+        // Inicializamos el mapa con preferCanvas: true para soportar miles de puntos
+        var mimapa = L.map('mapa', { 
+            preferCanvas: true 
+        }).setView([-31.255, -61.49], 14);
 
+        // Agregamos el mapa base del Instituto Geográfico Nacional
         L.tileLayer('https://ign.gob.ar{z}/{x}/{-y}.png', {
-            attribution: 'IGN Argentina'
+            attribution: 'IGN Argentina',
+            maxZoom: 20
         }).addTo(mimapa);
 
-        // 3. URL DEL CSV DE GOOGLE
-        const urlCSV = "https://google.com";
+        // URL DE TU GOOGLE SHEETS (Publicado como CSV)
+        const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
 
-        // 4. PROCESAR PUNTOS
+        // Función para cargar y dibujar los puntos
         Papa.parse(urlCSV, {
             download: true,
             header: true,
             skipEmptyLines: true,
+            dynamicTyping: true,
             complete: function(results) {
-                console.log("Datos cargados: ", results.data.length);
+                console.log("Total de filas leídas: ", results.data.length);
+                
                 results.data.forEach(function(fila) {
+                    // Extraemos coordenadas usando los nombres de tus columnas
                     let lat = parseFloat(fila.ycoord);
                     let lng = parseFloat(fila.xcoord);
-                    
+                    let datoCatastro = fila.catastro || "Sin datos";
+
                     if (!isNaN(lat) && !isNaN(lng)) {
-                        L.circleMarker([lat, lng], { 
+                        // Dibujamos un círculo pequeño (más rápido que un marcador común)
+                        L.circleMarker([lat, lng], {
                             radius: 2,
-                            fillColor: "#ff4500",
+                            fillColor: "#ff7800", // Color naranja
                             color: "#000",
                             weight: 0.5,
                             fillOpacity: 0.7
                         })
                         .addTo(mimapa)
-                        .bindPopup("Catastro: " + (fila.catastro || "Sin dato"));
+                        .bindPopup("<b>Catastro:</b> " + datoCatastro);
                     }
                 });
+            },
+            error: function(err) {
+                console.error("Error al cargar el CSV de Google:", err);
             }
         });
     </script>
 </body>
 </html>
+
