@@ -1,60 +1,58 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Mapa de Catastro - Rafaela</title>
+    <title>Mapa de Catastro</title>
+    <!-- 1. LIBRERÍAS (URLs COMPLETAS) -->
     <link rel="stylesheet" href="https://unpkg.com" />
     <script src="https://unpkg.com"></script>
     <script src="https://cloudflare.com"></script>
+    
     <style>
-        body { margin: 0; padding: 0; }
-        #mapa { height: 100vh; width: 100%; background: #f0f0f0; }
+        body { margin: 0; }
+        #mapa { height: 100vh; width: 100%; }
     </style>
 </head>
 <body> 
     <div id="mapa"></div>
 
     <script type="text/javascript">
-        // 1. Inicializar con Canvas para soportar los 40,000 puntos
+        // 2. INICIALIZAMOS EL MAPA (Con Canvas para los 40k puntos)
         var mimapa = L.map('mapa', { preferCanvas: true }).setView([-31.255, -61.49], 14);
 
+        // MAPA BASE DE IGN (URL COMPLETA)
         L.tileLayer('https://ign.gob.ar{z}/{x}/{-y}.png', {
             attribution: 'IGN Argentina',
             maxZoom: 20
         }).addTo(mimapa);
 
+        // 3. URL DEL CSV DE GOOGLE
         const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
 
+        // 4. PROCESAR PUNTOS
         Papa.parse(urlCSV, {
             download: true,
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
-                console.log("Datos recibidos:", results.data.length);
-                
-                results.data.forEach(function(fila, index) {
-                    // Limpieza de datos: Convertimos a número y quitamos espacios
-                    // Importante: Google Sheets a veces pone nombres raros si hay espacios
-                    let lat = parseFloat(fila.ycoord || fila['ycoord '] || fila.Y);
-                    let lng = parseFloat(fila.xcoord || fila['xcoord '] || fila.X);
-                    let info = fila.catastro || "Sin dato";
-
+                results.data.forEach(function(fila) {
+                    let lat = parseFloat(fila.ycoord);
+                    let lng = parseFloat(fila.xcoord);
+                    
                     if (!isNaN(lat) && !isNaN(lng)) {
-                        L.circleMarker([lat, lng], {
+                        L.circleMarker([lat, lng], { 
                             radius: 2,
                             fillColor: "#ff4500",
                             color: "#000",
-                            weight: 0.3,
-                            fillOpacity: 0.8
+                            weight: 0.5,
+                            fillOpacity: 0.7
                         })
                         .addTo(mimapa)
-                        .bindPopup("<b>Catastro:</b> " + info);
+                        .bindPopup("Catastro: " + fila.catastro);
                     }
                 });
-            },
-            error: function(err) {
-                console.error("Error al leer el CSV:", err);
             }
         });
     </script>
 </body>
 </html>
+
