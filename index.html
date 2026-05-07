@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Factibilidad</title>
+    <title>Mapa de Catastro</title>
     
-    <!-- 1. LIBRERÍAS EXTERNAS (Con protocolos de seguridad corregidos) -->
-    <link rel="stylesheet" href="https://unpkg.com" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cloudflare.com" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- 1. LIBRERÍAS (Cambiadas a jsDelivr para evitar errores de CORS en GitHub) -->
+    <link rel="stylesheet" href="https://jsdelivr.net" />
+    <script src="https://jsdelivr.net"></script>
+    <script src="https://jsdelivr.net"></script>
     
     <style>
         body { margin: 0; padding: 0; }
@@ -16,16 +16,15 @@
     </style>
 </head>
 <body> 
-
     <div id="mapa"></div>
 
     <script type="text/javascript">
-        // Esta función espera a que todas las librerías se carguen para evitar el "L is not defined"
-        document.addEventListener('DOMContentLoaded', function() {
+        // Esperamos a que el navegador cargue los scripts para usar 'L'
+        window.onload = function() {
             
-            // 2. INICIALIZAR MAPA
+            // 2. INICIALIZAMOS EL MAPA
             var mimapa = L.map('mapa', { 
-                preferCanvas: true // CRÍTICO para los 40.000 puntos
+                preferCanvas: true 
             }).setView([-31.255, -61.49], 14);
 
             // 3. CAPA BASE IGN
@@ -34,19 +33,16 @@
                 maxZoom: 20
             }).addTo(mimapa);
 
-            // 4. CARGA DE DATOS DESDE TU GOOGLE SHEET
+            // 4. LINK DE TU GOOGLE SHEET (CSV)
             const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
 
+            // 5. CARGAR Y DIBUJAR PUNTOS
             Papa.parse(urlCSV, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
-                dynamicTyping: true,
                 complete: function(results) {
-                    console.log("Cargando puntos:", results.data.length);
-                    
                     results.data.forEach(function(fila) {
-                        // Mapeo de tus columnas xcoord e ycoord
                         let lat = parseFloat(fila.ycoord);
                         let lng = parseFloat(fila.xcoord);
                         
@@ -62,13 +58,9 @@
                             .bindPopup("<b>Catastro:</b> " + (fila.catastro || "S/D"));
                         }
                     });
-                },
-                error: function(err) {
-                    console.error("Error al cargar Google Sheets:", err);
                 }
             });
-        });
+        };
     </script>
 </body>
 </html>
-
