@@ -4,64 +4,60 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Catastro</title>
-    
-    <!-- 1. LIBRERÍAS (Cambiadas a jsDelivr para evitar errores de CORS en GitHub) -->
-    <link rel="stylesheet" href="https://jsdelivr.net" />
-    <script src="https://jsdelivr.net"></script>
-    <script src="https://jsdelivr.net"></script>
-    
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+
     <style>
         body { margin: 0; padding: 0; }
-        #mapa { height: 100vh; width: 100%; background: #ffffff; }
+        #mapa { height: 100vh; width: 100%; }
     </style>
 </head>
-<body> 
+<body>
     <div id="mapa"></div>
 
-    <script type="text/javascript">
-        // Esperamos a que el navegador cargue los scripts para usar 'L'
-        window.onload = function() {
-            
-            // 2. INICIALIZAMOS EL MAPA
-            var mimapa = L.map('mapa', { 
-                preferCanvas: true 
-            }).setView([-31.255, -61.49], 14);
+    <!-- Leaflet JS -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <!-- PapaParse -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-            // 3. CAPA BASE IGN
-         L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
-        attribution: '<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> | <a href="http://www.ign.gob.ar/AreaServicios/Argenmap/IntroduccionV2" target="_blank">Instituto Geográfico Nacional</a> + <a href="http://www.osm.org/copyright" target="_blank">OpenStreetMap</a>',
-        minZoom: 12,
-        maxZoom: 25
-    }).addTo(mimapa);
+    <script>
+        var mimapa = L.map('mapa', { preferCanvas: true }).setView([-31.255, -61.49], 14);
 
-            // 4. LINK DE TU GOOGLE SHEET (CSV)
-            const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
+        L.tileLayer(
+            'https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png',
+            {
+                attribution: 'Leaflet | IGN + OpenStreetMap',
+                minZoom: 12,
+                maxZoom: 25
+            }
+        ).addTo(mimapa);
 
-            // 5. CARGAR Y DIBUJAR PUNTOS
-            Papa.parse(urlCSV, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    results.data.forEach(function(fila) {
-                        let lat = parseFloat(fila.ycoord);
-                        let lng = parseFloat(fila.xcoord);
-                        
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            L.circleMarker([lat, lng], {
-                                radius: 2.5,
-                                fillColor: "#ff4d00",
-                                color: "#ffffff",
-                                weight: 0.5,
-                                fillOpacity: 0.8
-                            })
-                            .addTo(mimapa)
-                            .bindPopup("<b>Catastro:</b> " + (fila.catastro || "S/D"));
-                        }
-                    });
-                }
-            });
-        };
+        const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
+
+        Papa.parse(urlCSV, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                results.data.forEach(function(fila) {
+                    let lat = parseFloat(fila.ycoord);
+                    let lng = parseFloat(fila.xcoord);
+
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        L.circleMarker([lat, lng], {
+                            radius: 2.5,
+                            fillColor: "#ff4d00",
+                            color: "#ffffff",
+                            weight: 0.5,
+                            fillOpacity: 0.8
+                        })
+                        .addTo(mimapa)
+                        .bindPopup("<b>Catastro:</b> " + (fila.catastro || "S/D"));
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
