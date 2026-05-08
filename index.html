@@ -3,61 +3,270 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Catastro</title>
+    <title>Inspecciones de Factibilidad</title>
 
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
 
     <style>
-        body { margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; }
         #mapa { height: 100vh; width: 100%; }
+
+        /* Panel de leyenda */
+        #leyenda {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        #leyenda h4 { margin-bottom: 6px; font-size: 13px; color: #333; }
+        .leyenda-item { display: flex; align-items: center; gap: 8px; }
+        .dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        /* Panel de filtros */
+        #filtros {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            font-size: 13px;
+        }
+        #filtros h4 { margin-bottom: 8px; color: #333; }
+        #filtros label { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; cursor: pointer; }
+
+        /* Contador */
+        #contador {
+            position: absolute;
+            top: 10px;
+            left: 50px;
+            z-index: 1000;
+            background: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            font-size: 13px;
+            color: #444;
+        }
     </style>
 </head>
 <body>
     <div id="mapa"></div>
 
-    <!-- Leaflet JS -->
+    <div id="contador">Cargando inspecciones...</div>
+
+    <div id="filtros">
+        <h4>Filtrar por estado</h4>
+        <label><input type="checkbox" id="chk-activa" checked> <span style="color:#2a9d2a">● Activa</span></label>
+        <label><input type="checkbox" id="chk-porvencer" checked> <span style="color:#e6a800">● Por vencer</span></label>
+        <label><input type="checkbox" id="chk-vencida" checked> <span style="color:#cc2200">● Vencida</span></label>
+    </div>
+
+    <div id="leyenda">
+        <h4>Estado de vigencia</h4>
+        <div class="leyenda-item"><div class="dot" style="background:#2ecc40"></div> Activa</div>
+        <div class="leyenda-item"><div class="dot" style="background:#ffcc00"></div> Por vencer (&lt;30 días)</div>
+        <div class="leyenda-item"><div class="dot" style="background:#e74c3c"></div> Vencida</div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
-    <!-- PapaParse -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
     <script>
-        var mimapa = L.map('mapa', { preferCanvas: true }).setView([-31.255, -61.49], 14);
+    // ============================================================
+    //  CONFIGURACIÓN — 
+    // ============================================================
+    const CONFIG = {
+        //Sheet de catastro (catastro, xcoord, ycoord)
+        urlCatastro: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv",
 
-        L.tileLayer(
-            'https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png',
-            {
-                attribution: 'Leaflet | IGN + OpenStreetMap',
-                minZoom: 12,
-                maxZoom: 25
-            }
-        ).addTo(mimapa);
+        // Sheet de inspecciones (catastro, fecha, nombre, direccion)
+        // Reemplazá con la URL de tu sheet de inspecciones publicado como CSV
+        urlInspecciones: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTWU8CfCldsozRmmUcogV-rK4xWoV-nn8WArnAUihzFJQfGXmmLtkorjT0UJBFsVUgITYHXCatofI0Y/pub?output=csv",
 
-        const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv";
+        // Vigencia en meses desde la fecha de emisión
+        vigenciaMeses: 12,
 
-        Papa.parse(urlCSV, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                results.data.forEach(function(fila) {
-                    let lat = parseFloat(fila.ycoord);
-                    let lng = parseFloat(fila.xcoord);
+        // Días antes del vencimiento para considerar "por vencer"
+        diasAlerta: 30,
 
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        L.circleMarker([lat, lng], {
-                            radius: 2.5,
-                            fillColor: "#ff4d00",
-                            color: "#ffffff",
-                            weight: 0.5,
-                            fillOpacity: 0.8
-                        })
-                        .addTo(mimapa)
-                        .bindPopup("<b>Catastro:</b> " + (fila.catastro || "S/D"));
+        // Centro y zoom inicial del mapa
+        centro: [-31.255, -61.49],
+        zoom: 14
+    };
+    // ============================================================
+
+    // Inicializar mapa
+    const mapa = L.map('mapa', { preferCanvas: true }).setView(CONFIG.centro, CONFIG.zoom);
+
+    L.tileLayer(
+        'https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png',
+        {
+            attribution: 'Leaflet | IGN + OpenStreetMap',
+            minZoom: 3,
+            maxZoom: 25
+        }
+    ).addTo(mapa);
+
+    // Estado de la app
+    const capas = { activa: L.layerGroup(), porvencer: L.layerGroup(), vencida: L.layerGroup() };
+    Object.values(capas).forEach(c => c.addTo(mapa));
+
+    // ── Helpers ──────────────────────────────────────────────────
+
+    function parsearFecha(str) {
+        // Acepta DD/MM/YYYY o YYYY-MM-DD
+        if (!str) return null;
+        str = str.trim();
+        if (str.includes('/')) {
+            const [d, m, a] = str.split('/');
+            return new Date(+a, +m - 1, +d);
+        }
+        return new Date(str);
+    }
+
+    function calcularEstado(fechaEmision) {
+        if (!fechaEmision || isNaN(fechaEmision)) return null;
+
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        const vencimiento = new Date(fechaEmision);
+        vencimiento.setMonth(vencimiento.getMonth() + CONFIG.vigenciaMeses);
+
+        const diasRestantes = Math.floor((vencimiento - hoy) / 86400000);
+
+        if (diasRestantes < 0)                       return { estado: "vencida",   color: "#e74c3c", texto: "Vencida" };
+        if (diasRestantes <= CONFIG.diasAlerta)      return { estado: "porvencer", color: "#ffcc00", texto: "Por vencer" };
+        return                                              { estado: "activa",    color: "#2ecc40", texto: "Activa" };
+    }
+
+    function formatFecha(fecha) {
+        if (!fecha || isNaN(fecha)) return "S/D";
+        return fecha.toLocaleDateString('es-AR');
+    }
+
+    // ── Carga de datos ───────────────────────────────────────────
+
+    function cargarDatos() {
+        // Paso 1: cargar tabla de catastros (lookup de coords)
+        Papa.parse(CONFIG.urlCatastro, {
+            download: true, header: true, skipEmptyLines: true,
+            complete: function(resCatastro) {
+
+                // Construir diccionario catastro → {lat, lng}
+                const coordsMap = {};
+                resCatastro.data.forEach(function(fila) {
+                    const id = String(fila.catastro || "").trim();
+                    const lat = parseFloat(fila.ycoord);
+                    const lng = parseFloat(fila.xcoord);
+                    if (id && !isNaN(lat) && !isNaN(lng)) {
+                        coordsMap[id] = { lat, lng };
                     }
                 });
+
+                // Paso 2: cargar inspecciones y hacer el JOIN
+                Papa.parse(CONFIG.urlInspecciones, {
+                    download: true, header: true, skipEmptyLines: true,
+                    complete: function(resInsp) {
+                        dibujarInspecciones(resInsp.data, coordsMap);
+                    },
+                    error: function(err) {
+                        document.getElementById('contador').textContent = "Error al cargar inspecciones.";
+                        console.error(err);
+                    }
+                });
+            },
+            error: function(err) {
+                document.getElementById('contador').textContent = "Error al cargar catastros.";
+                console.error(err);
             }
         });
+    }
+
+    function dibujarInspecciones(inspecciones, coordsMap) {
+        let total = 0, sinCoords = 0;
+        const conteo = { activa: 0, porvencer: 0, vencida: 0 };
+
+        // Limpiar capas
+        Object.values(capas).forEach(c => c.clearLayers());
+
+        inspecciones.forEach(function(insp) {
+            const idCatastro = String(insp.catastro || "").trim();
+            const coords = coordsMap[idCatastro];
+
+            if (!coords) { sinCoords++; return; }
+
+            const fechaEmision = parsearFecha(insp.fecha);
+            const estadoInfo = calcularEstado(fechaEmision);
+            if (!estadoInfo) return;
+
+            total++;
+            conteo[estadoInfo.estado]++;
+
+            const vencimiento = new Date(fechaEmision);
+            vencimiento.setMonth(vencimiento.getMonth() + CONFIG.vigenciaMeses);
+
+            const popup = `
+                <div style="font-size:13px; line-height:1.6; min-width:180px">
+                    <b style="font-size:14px">${insp.nombre || "S/D"}</b><br>
+                    <span style="color:#666">${insp.direccion || "S/D"}</span><br>
+                    <hr style="margin:6px 0; border-color:#eee">
+                    <b>Catastro:</b> ${idCatastro}<br>
+                    <b>Emisión:</b> ${formatFecha(fechaEmision)}<br>
+                    <b>Vencimiento:</b> ${formatFecha(vencimiento)}<br>
+                    <b>Estado:</b> <span style="color:${estadoInfo.color}; font-weight:bold">${estadoInfo.texto}</span>
+                </div>`;
+
+            L.circleMarker([coords.lat, coords.lng], {
+                radius: 7,
+                fillColor: estadoInfo.color,
+                color: "#ffffff",
+                weight: 1.5,
+                fillOpacity: 0.9
+            })
+            .bindPopup(popup)
+            .addTo(capas[estadoInfo.estado]);
+        });
+
+        // Actualizar contador
+        document.getElementById('contador').innerHTML =
+            `<b>${total}</b> inspecciones —
+             <span style="color:#2a9d2a">●${conteo.activa} activas</span> ·
+             <span style="color:#b8960a">●${conteo.porvencer} por vencer</span> ·
+             <span style="color:#cc2200">●${conteo.vencida} vencidas</span>` +
+            (sinCoords > 0 ? ` · <span style="color:#999">${sinCoords} sin coordenadas</span>` : "");
+    }
+
+    // ── Filtros (checkboxes) ─────────────────────────────────────
+
+    document.getElementById('chk-activa').addEventListener('change', function() {
+        this.checked ? capas.activa.addTo(mapa) : mapa.removeLayer(capas.activa);
+    });
+    document.getElementById('chk-porvencer').addEventListener('change', function() {
+        this.checked ? capas.porvencer.addTo(mapa) : mapa.removeLayer(capas.porvencer);
+    });
+    document.getElementById('chk-vencida').addEventListener('change', function() {
+        this.checked ? capas.vencida.addTo(mapa) : mapa.removeLayer(capas.vencida);
+    });
+
+    // ── Arrancar ─────────────────────────────────────────────────
+    cargarDatos();
+
     </script>
 </body>
-</html>
+</html> 
