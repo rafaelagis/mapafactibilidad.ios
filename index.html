@@ -211,6 +211,7 @@
             if (!coords) { sinCoords++; return; }
 
             const fechaEmision = parsearFecha(insp.fechanotificacion);
+            if (!fechaEmision || fechaEmision.getFullYear() !== 2026) return;
             const estadoInfo = calcularEstado(fechaEmision);
             if (!estadoInfo) return;
 
