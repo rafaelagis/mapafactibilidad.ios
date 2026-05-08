@@ -222,9 +222,9 @@
 
             const popup = `
                 <div style="font-size:13px; line-height:1.6; min-width:180px">
-                    <b style="font-size:14px">${insp.nombre || "S/D"}</b><br>
-                    <span style="color:#666">${insp.direccion || "S/D"}</span><br>
-                    <span style="color:#666">${insp.rubro || "S/D"}</span><br>
+                    <b>Titular:</b> ${insp.titular || "S/D"}<br>
+                    <b>Direccion:</b> ${insp.direccion || "S/D"}<br>
+                    <b>Rubro:</b> ${insp.rubro || "S/D"}<br>
                     <hr style="margin:6px 0; border-color:#eee">
                     <b>Catastro:</b> ${idCatastro}<br>
                     <b>Emisión:</b> ${formatFecha(fechaEmision)}<br>
