@@ -79,7 +79,7 @@
     <div id="leyenda">
         <h4>Estado de vigencia</h4>
         <div class="leyenda-item"><div class="dot" style="background:#2ecc40"></div> Activa</div>
-        <div class="leyenda-item"><div class="dot" style="background:#ffcc00"></div> Por vencer (&lt;30 días)</div>
+        <div class="leyenda-item"><div class="dot" style="background:#ffcc00"></div> Por vencer</div>
         <div class="leyenda-item"><div class="dot" style="background:#e74c3c"></div> Vencida</div>
     </div>
 
@@ -98,10 +98,10 @@
         urlInspecciones: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTWU8CfCldsozRmmUcogV-rK4xWoV-nn8WArnAUihzFJQfGXmmLtkorjT0UJBFsVUgITYHXCatofI0Y/pub?output=csv",
 
         // Vigencia en meses desde la fecha de emisión
-        vigenciaMeses: 1,
+        vigenciaMeses: 4,
 
         // Días antes del vencimiento para considerar "por vencer"
-        diasAlerta: 1,
+        diasAlerta: 90,
 
         // Centro y zoom inicial del mapa
         centro: [-31.255, -61.49],
