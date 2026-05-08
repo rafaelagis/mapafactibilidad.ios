@@ -274,7 +274,7 @@
             color: "#ffffff",
             weight: 2.5,
             fillOpacity: 1
-        }).bindPopup("📍 Estás aquí");
+        }).bindPopup("📍 Estás acá");
 
         // Círculo de precisión (radio del GPS)
         const circuloPrecision = L.circle([0, 0], {
@@ -312,7 +312,7 @@
         btnUbicacion.onAdd = function() {
             const btn = L.DomUtil.create('button');
             btn.innerHTML = '📍';
-            btn.title = 'Mi ubicación';
+            btn.title = 'Centrar Ubicación';
             btn.style.cssText = `
                 font-size: 20px;
                 padding: 8px 12px;
