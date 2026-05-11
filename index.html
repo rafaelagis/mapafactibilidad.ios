@@ -97,7 +97,7 @@
             <label><input type="checkbox" id="chk-activa"    checked> <span style="color:#2a9d2a">● Activa</span></label>
             <label><input type="checkbox" id="chk-porvencer" checked> <span style="color:#e6a800">● Por vencer</span></label>
             <label><input type="checkbox" id="chk-vencida"   checked> <span style="color:#cc2200">● Vencida</span></label>
-            <label><input type="checkbox" id="chk-vista"     checked> <span style="color:#6E6E6E">● Vista</span></label>
+            <label><input type="checkbox" id="chk-vista"     checked> <span style="color:#6E6E6E, border-radius: 25px;">● Vista</span></label>
         </div>
     </div>
 
@@ -182,7 +182,7 @@
         if (!fechaEmision || isNaN(fechaEmision)) return null;
 
         // "vista:si" tiene prioridad sobre cualquier estado de vencimiento
-        if (esVista) return { estado: "vista", color: "#6E6E6E", texto: "Vista" };
+        if (esVista) return { estado: "vista", color: "#6E6E6E, border-radius: 25px;", texto: "Vista" };
 
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
@@ -287,7 +287,7 @@
                 `<span style="color:#2a9d2a">A:${conteo.activa}</span> · ` +
                 `<span style="color:#b8960a">V:${conteo.porvencer}</span> · ` +
                 `<span style="color:#cc2200">X:${conteo.vencida}</span> · ` +
-                `<span style="color:#6E6E6E">V:${conteo.vista}</span>`;
+                `<span style="color:#6E6E6E,  border-radius: 0px;">V:${conteo.vista}</span>`;
         } else {
             document.getElementById('contador').innerHTML =
                 `<b>${total}</b> inspecciones — ` +
