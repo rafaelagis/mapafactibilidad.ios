@@ -4,52 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inspecciones de Factibilidad</title>
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
-
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; }
         #mapa { height: 100vh; width: 100%; }
 
-        /* Panel de leyenda */
-        #leyenda {
-            position: absolute;
-            bottom: 30px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            font-size: 13px;
-            line-height: 1.8;
-        }
-        #leyenda h4 { margin-bottom: 6px; font-size: 13px; color: #333; }
-        .leyenda-item { display: flex; align-items: center; gap: 8px; }
-        .dot {
-            width: 12px; height: 12px;
-            border-radius: 50%;
-            border: 1.5px solid rgba(0,0,0,0.3);
-            flex-shrink: 0;
-        }
-
-        /* Panel de filtros */
-        #filtros {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            font-size: 13px;
-        }
-        #filtros h4 { margin-bottom: 8px; color: #333; }
-        #filtros label { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; cursor: pointer; }
-
-        /* Contador */
+        /* ── Contador ── */
         #contador {
             position: absolute;
             top: 10px;
@@ -61,6 +22,90 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.25);
             font-size: 13px;
             color: #444;
+            max-width: calc(100vw - 130px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── Panel flotante genérico ── */
+        .panel {
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            font-size: 13px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            cursor: pointer;
+            user-select: none;
+            gap: 10px;
+        }
+        .panel-header h4 { color: #333; font-size: 13px; white-space: nowrap; }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            color: #555;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .panel-body {
+            padding: 0 14px 10px 14px;
+            transition: max-height 0.25s ease, opacity 0.25s ease;
+            max-height: 200px;
+            opacity: 1;
+        }
+        .panel-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-bottom: 0;
+            pointer-events: none;
+        }
+
+        /* ── Filtros ── */
+        #filtros { top: 10px; right: 10px; }
+        #filtros label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+
+        /* ── Leyenda ── */
+        #leyenda { bottom: 30px; right: 10px; }
+        #leyenda .panel-body { line-height: 1.8; }
+        .leyenda-item { display: flex; align-items: center; gap: 8px; }
+        .dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        /* ── MÓVIL (≤ 520px) ── */
+        @media (max-width: 520px) {
+            #contador {
+                top: 8px;
+                left: 46px;
+                font-size: 11px;
+                padding: 6px 10px;
+                max-width: calc(100vw - 120px);
+            }
+            #filtros { top: 8px; right: 8px; max-width: 165px; }
+            #leyenda { bottom: 20px; right: 8px; max-width: 160px; }
         }
     </style>
 </head>
@@ -69,66 +114,85 @@
 
     <div id="contador">Cargando inspecciones...</div>
 
-    <div id="filtros">
-        <h4>Filtrar por estado</h4>
-        <label><input type="checkbox" id="chk-activa" checked> <span style="color:#2a9d2a">● Activa</span></label>
-        <label><input type="checkbox" id="chk-porvencer" checked> <span style="color:#e6a800">● Por vencer</span></label>
-        <label><input type="checkbox" id="chk-vencida" checked> <span style="color:#cc2200">● Vencida</span></label>
+    <!-- Filtros -->
+    <div id="filtros" class="panel">
+        <div class="panel-header" onclick="togglePanel('filtros')">
+            <h4>Filtrar por estado</h4>
+            <button class="toggle-btn" id="btn-filtros">▲</button>
+        </div>
+        <div class="panel-body" id="body-filtros">
+            <label><input type="checkbox" id="chk-activa" checked> <span style="color:#2a9d2a">● Activa</span></label>
+            <label><input type="checkbox" id="chk-porvencer" checked> <span style="color:#e6a800">● Por vencer</span></label>
+            <label><input type="checkbox" id="chk-vencida" checked> <span style="color:#cc2200">● Vencida</span></label>
+        </div>
     </div>
 
-    <div id="leyenda">
-        <h4>Estado de vigencia</h4>
-        <div class="leyenda-item"><div class="dot" style="background:#2ecc40"></div> Activa</div>
-        <div class="leyenda-item"><div class="dot" style="background:#ffcc00"></div> Por vencer</div>
-        <div class="leyenda-item"><div class="dot" style="background:#e74c3c"></div> Vencida</div>
+    <!-- Leyenda -->
+    <div id="leyenda" class="panel">
+        <div class="panel-header" onclick="togglePanel('leyenda')">
+            <h4>Estado de vigencia</h4>
+            <button class="toggle-btn" id="btn-leyenda">▲</button>
+        </div>
+        <div class="panel-body" id="body-leyenda">
+            <div class="leyenda-item"><div class="dot" style="background:#2ecc40"></div> Activa</div>
+            <div class="leyenda-item"><div class="dot" style="background:#ffcc00"></div> Por vencer</div>
+            <div class="leyenda-item"><div class="dot" style="background:#e74c3c"></div> Vencida</div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
     <script>
-    // ============================================================
-    //  CONFIGURACIÓN — 
-    // ============================================================
+
+    // ── Toggle de paneles ────────────────────────────────────────
+    function togglePanel(id) {
+        const body = document.getElementById('body-' + id);
+        const btn  = document.getElementById('btn-' + id);
+        const collapsed = body.classList.toggle('collapsed');
+        btn.textContent = collapsed ? '▼' : '▲';
+    }
+
+    // En móvil, colapsar paneles al inicio
+    if (window.innerWidth <= 520) {
+        ['filtros', 'leyenda'].forEach(function(id) {
+            document.getElementById('body-' + id).classList.add('collapsed');
+            document.getElementById('btn-' + id).textContent = '▼';
+        });
+    }
+
+    // ── CONFIG ───────────────────────────────────────────────────
     const CONFIG = {
-        //Sheet de catastro (catastro, xcoord, ycoord)
         urlCatastro: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv",
-
-        // Sheet de inspecciones
         urlInspecciones: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTDrgE5VcrC_o0uz_RYnD9Xdg7-DB9qpWjpQboicHLpikmxyDrB6cJXP71vIhsnb5xrkd8cXcySzHmw/pub?output=csv",
-
-        // Vigencia en meses desde la fecha de emisión
         vigenciaMeses: 4,
-
-        // Días antes del vencimiento para considerar "por vencer"
         diasAlerta: 90,
-
-        // Centro y zoom inicial del mapa
         centro: [-31.255, -61.49],
         zoom: 14
     };
-    // ============================================================
 
-    // Inicializar mapa
+    // ── Mapa ─────────────────────────────────────────────────────
     const mapa = L.map('mapa', { preferCanvas: true }).setView(CONFIG.centro, CONFIG.zoom);
 
-    L.tileLayer(
-        'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}',
-        {
-            attribution: 'Leaflet | IGN + OpenStreetMap',
-            minZoom: 3,
-            maxZoom: 25
-        }
-    ).addTo(mapa);
+    const baseMaps = {
+        "Satelital": L.tileLayer(
+            'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}',
+            { attribution: 'Leaflet | Google Satellite', minZoom: 3, maxZoom: 25 }
+        ),
+        "Argenmap": L.tileLayer(
+            'https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png',
+            { attribution: 'Leaflet | IGN + OpenStreetMap', minZoom: 3, maxZoom: 25 }
+        )
+    };
 
-    // Estado de la app
+    baseMaps["Satelital"].addTo(mapa);
+    L.control.layers(baseMaps, null, { position: 'topleft', collapsed: false }).addTo(mapa);
+
+    // ── Capas ────────────────────────────────────────────────────
     const capas = { activa: L.layerGroup(), porvencer: L.layerGroup(), vencida: L.layerGroup() };
     Object.values(capas).forEach(c => c.addTo(mapa));
 
     // ── Helpers ──────────────────────────────────────────────────
-
     function parsearFecha(str) {
-        // Acepta DD/MM/YYYY o YYYY-MM-DD
         if (!str) return null;
         str = str.trim();
         if (str.includes('/')) {
@@ -140,18 +204,14 @@
 
     function calcularEstado(fechaEmision) {
         if (!fechaEmision || isNaN(fechaEmision)) return null;
-
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
-
         const vencimiento = new Date(fechaEmision);
         vencimiento.setMonth(vencimiento.getMonth() + CONFIG.vigenciaMeses);
-
         const diasRestantes = Math.floor((vencimiento - hoy) / 86400000);
-
-        if (diasRestantes < 0)                       return { estado: "vencida",   color: "#e74c3c", texto: "Vencida" };
-        if (diasRestantes <= CONFIG.diasAlerta)      return { estado: "porvencer", color: "#ffcc00", texto: "Por vencer" };
-        return                                              { estado: "activa",    color: "#2ecc40", texto: "Activa" };
+        if (diasRestantes < 0)                  return { estado: "vencida",   color: "#e74c3c", texto: "Vencida" };
+        if (diasRestantes <= CONFIG.diasAlerta) return { estado: "porvencer", color: "#ffcc00", texto: "Por vencer" };
+        return                                         { estado: "activa",    color: "#2ecc40", texto: "Activa" };
     }
 
     function formatFecha(fecha) {
@@ -159,31 +219,21 @@
         return fecha.toLocaleDateString('es-AR');
     }
 
-    // ── Carga de datos ───────────────────────────────────────────
-
+    // ── Datos ────────────────────────────────────────────────────
     function cargarDatos() {
-        // Paso 1: cargar tabla de catastros (lookup de coords)
         Papa.parse(CONFIG.urlCatastro, {
             download: true, header: true, skipEmptyLines: true,
             complete: function(resCatastro) {
-
-                // Construir diccionario catastro → {lat, lng}
                 const coordsMap = {};
                 resCatastro.data.forEach(function(fila) {
-                    const id = String(fila.catastro || "").trim();
+                    const id  = String(fila.catastro || "").trim();
                     const lat = parseFloat(fila.ycoord);
                     const lng = parseFloat(fila.xcoord);
-                    if (id && !isNaN(lat) && !isNaN(lng)) {
-                        coordsMap[id] = { lat, lng };
-                    }
+                    if (id && !isNaN(lat) && !isNaN(lng)) coordsMap[id] = { lat, lng };
                 });
-
-                // Paso 2: cargar inspecciones y hacer el JOIN
                 Papa.parse(CONFIG.urlInspecciones, {
                     download: true, header: true, skipEmptyLines: true,
-                    complete: function(resInsp) {
-                        dibujarInspecciones(resInsp.data, coordsMap);
-                    },
+                    complete: function(resInsp) { dibujarInspecciones(resInsp.data, coordsMap); },
                     error: function(err) {
                         document.getElementById('contador').textContent = "Error al cargar inspecciones.";
                         console.error(err);
@@ -200,18 +250,18 @@
     function dibujarInspecciones(inspecciones, coordsMap) {
         let total = 0, sinCoords = 0;
         const conteo = { activa: 0, porvencer: 0, vencida: 0 };
-
-        // Limpiar capas
         Object.values(capas).forEach(c => c.clearLayers());
+
+        const popupAncho = window.innerWidth <= 520 ? 190 : 210;
 
         inspecciones.forEach(function(insp) {
             const idCatastro = String(insp.catastro || "").trim();
             const coords = coordsMap[idCatastro];
-
             if (!coords) { sinCoords++; return; }
 
             const fechaEmision = parsearFecha(insp.fechanotificacion);
             if (!fechaEmision || fechaEmision.getFullYear() !== 2026) return;
+
             const estadoInfo = calcularEstado(fechaEmision);
             if (!estadoInfo) return;
 
@@ -222,9 +272,9 @@
             vencimiento.setMonth(vencimiento.getMonth() + CONFIG.vigenciaMeses);
 
             const popup = `
-                <div style="font-size:13px; line-height:1.6; min-width:180px">
+                <div style="font-size:13px; line-height:1.6; min-width:${popupAncho}px">
                     <b>Titular:</b> ${insp.titular || "S/D"}<br>
-                    <b>Direccion:</b> ${insp.direccion || "S/D"}<br>
+                    <b>Dirección:</b> ${insp.direccion || "S/D"}<br>
                     <b>Rubro:</b> ${insp.rubro || "S/D"}<br>
                     <b>Comentarios:</b> ${insp.comentarios || "S/D"}<br>
                     <hr style="margin:6px 0; border-color:#eee">
@@ -245,17 +295,24 @@
             .addTo(capas[estadoInfo.estado]);
         });
 
-        // Actualizar contador
-        document.getElementById('contador').innerHTML =
-            `<b>${total}</b> inspecciones —
-             <span style="color:#2a9d2a">●${conteo.activa} activas</span> ·
-             <span style="color:#b8960a">●${conteo.porvencer} por vencer</span> ·
-             <span style="color:#cc2200">●${conteo.vencida} vencidas</span>` +
-            (sinCoords > 0 ? ` · <span style="color:#999">${sinCoords} sin coordenadas</span>` : "");
+        const esMobil = window.innerWidth <= 520;
+        if (esMobil) {
+            document.getElementById('contador').innerHTML =
+                `<b>${total}</b> insp. — ` +
+                `<span style="color:#2a9d2a">A:${conteo.activa}</span> · ` +
+                `<span style="color:#b8960a">V:${conteo.porvencer}</span> · ` +
+                `<span style="color:#cc2200">X:${conteo.vencida}</span>`;
+        } else {
+            document.getElementById('contador').innerHTML =
+                `<b>${total}</b> inspecciones — ` +
+                `<span style="color:#2a9d2a">● ${conteo.activa} activas</span> · ` +
+                `<span style="color:#b8960a">● ${conteo.porvencer} por vencer</span> · ` +
+                `<span style="color:#cc2200">● ${conteo.vencida} vencidas</span>` +
+                (sinCoords > 0 ? ` · <span style="color:#999">${sinCoords} sin coordenadas</span>` : "");
+        }
     }
 
-    // ── Filtros (checkboxes) ─────────────────────────────────────
-
+    // ── Filtros ──────────────────────────────────────────────────
     document.getElementById('chk-activa').addEventListener('change', function() {
         this.checked ? capas.activa.addTo(mapa) : mapa.removeLayer(capas.activa);
     });
@@ -266,65 +323,32 @@
         this.checked ? capas.vencida.addTo(mapa) : mapa.removeLayer(capas.vencida);
     });
 
- // ── Geolocalización ──────────────────────────────────────────
+    // ── Geolocalización ──────────────────────────────────────────
     if (navigator.geolocation) {
-
-        // Punto azul que representa al usuario
         const puntoUsuario = L.circleMarker([0, 0], {
-            radius: 9,
-            fillColor: "#2196F3",
-            color: "#ffffff",
-            weight: 2.5,
-            fillOpacity: 1
+            radius: 9, fillColor: "#2196F3", color: "#ffffff", weight: 2.5, fillOpacity: 1
         }).bindPopup("📍 Estás acá");
-
-        // Círculo de precisión (radio del GPS)
         const circuloPrecision = L.circle([0, 0], {
-            color: "#2196F3",
-            fillColor: "#2196F3",
-            fillOpacity: 0.1,
-            weight: 1
+            color: "#2196F3", fillColor: "#2196F3", fillOpacity: 0.1, weight: 1
         });
-
         let primeraVez = true;
-
         navigator.geolocation.watchPosition(
             function(pos) {
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
-                const precision = pos.coords.accuracy; // metros
-
                 puntoUsuario.setLatLng([lat, lng]).addTo(mapa);
-                circuloPrecision.setLatLng([lat, lng]).setRadius(precision).addTo(mapa);
-
-                // La primera vez que llega la posición, centramos el mapa
-                if (primeraVez) {
-                    mapa.setView([lat, lng], 17);
-                    primeraVez = false;
-                }
+                circuloPrecision.setLatLng([lat, lng]).setRadius(pos.coords.accuracy).addTo(mapa);
+                if (primeraVez) { mapa.setView([lat, lng], 17); primeraVez = false; }
             },
-            function(err) {
-                console.warn("Geolocalización no disponible:", err.message);
-            },
+            function(err) { console.warn("Geolocalización no disponible:", err.message); },
             { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
         );
-
-        // Botón para volver a centrar en mi posición
         const btnUbicacion = L.control({ position: 'bottomleft' });
         btnUbicacion.onAdd = function() {
             const btn = L.DomUtil.create('button');
             btn.innerHTML = '📍';
             btn.title = 'Centrar Ubicación';
-            btn.style.cssText = `
-                font-size: 20px;
-                padding: 8px 12px;
-                cursor: pointer;
-                border-radius: 8px;
-                border: none;
-                background: white;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                margin-bottom: 10px;
-            `;
+            btn.style.cssText = 'font-size:20px;padding:8px 12px;cursor:pointer;border-radius:8px;border:none;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.3);margin-bottom:10px;';
             L.DomEvent.on(btn, 'click', function() {
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     mapa.setView([pos.coords.latitude, pos.coords.longitude], 17);
@@ -333,7 +357,6 @@
             return btn;
         };
         btnUbicacion.addTo(mapa);
-
     } else {
         console.warn("Este navegador no soporta geolocalización.");
     }
