@@ -332,14 +332,19 @@
             color: "#2196F3", fillColor: "#2196F3", fillOpacity: 0.1, weight: 1
         });
         let primeraVez = true;
-        navigator.geolocation.watchPosition(
-            function(pos) {
-                const lat = pos.coords.latitude;
-                const lng = pos.coords.longitude;
-                puntoUsuario.setLatLng([lat, lng]).addTo(mapa);
-                circuloPrecision.setLatLng([lat, lng]).setRadius(pos.coords.accuracy).addTo(mapa);
-                if (primeraVez) { mapa.setView([lat, lng], 17); primeraVez = false; }
-            },
+      navigator.geolocation.watchPosition(
+    function(pos) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        
+        if (!mapa.hasLayer(puntoUsuario)) puntoUsuario.addTo(mapa);
+        if (!mapa.hasLayer(circuloPrecision)) circuloPrecision.addTo(mapa);
+        
+        puntoUsuario.setLatLng([lat, lng]);
+        circuloPrecision.setLatLng([lat, lng]).setRadius(pos.coords.accuracy);
+        
+        if (primeraVez) { mapa.setView([lat, lng], 17); primeraVez = false; }
+    },
             function(err) { console.warn("Geolocalización no disponible:", err.message); },
             { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
         );
