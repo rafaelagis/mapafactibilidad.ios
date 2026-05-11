@@ -110,21 +110,16 @@
     // ============================================================
 
     // Inicializar mapa
-       const mapa = L.map('mapa', { preferCanvas: true }).setView(CONFIG.centro, CONFIG.zoom);
+    const mapa = L.map('mapa', { preferCanvas: true }).setView(CONFIG.centro, CONFIG.zoom);
 
-    const baseMaps = {
-        "Satelital": L.tileLayer(
-            'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}',
-            { attribution: 'Leaflet | Google Satellite', minZoom: 3, maxZoom: 25 }
-        ),
-        "Argenmap": L.tileLayer(
-            'https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png',
-            { attribution: 'Leaflet | IGN + OpenStreetMap', minZoom: 3, maxZoom: 25 }
-        )
-    };
-
-    baseMaps["Satelital"].addTo(mapa);
-    L.control.layers(baseMaps, null, { position: 'topleft', collapsed: false }).addTo(mapa);
+    L.tileLayer(
+        'https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png',
+        {
+            attribution: 'Leaflet | IGN + OpenStreetMap',
+            minZoom: 3,
+            maxZoom: 25
+        }
+    ).addTo(mapa);
 
     // Estado de la app
     const capas = { activa: L.layerGroup(), porvencer: L.layerGroup(), vencida: L.layerGroup() };
@@ -346,9 +341,6 @@
     </script>
 </body>
 </html>
-
-
-
 
 
 
