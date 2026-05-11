@@ -10,25 +10,21 @@
         body { font-family: Arial, sans-serif; }
         #mapa { height: 100vh; width: 100%; }
 
-        /* ── Contador ── */
         #contador {
             position: absolute;
-            top: 10px;
-            left: 50px;
+            top: 10px; left: 50px;
             z-index: 1000;
             background: white;
             padding: 8px 14px;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            font-size: 13px;
-            color: #444;
+            font-size: 13px; color: #444;
             max-width: calc(100vw - 130px);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* ── Panel flotante genérico ── */
         .panel {
             position: absolute;
             z-index: 1000;
@@ -38,7 +34,6 @@
             font-size: 13px;
             overflow: hidden;
         }
-
         .panel-header {
             display: flex;
             align-items: center;
@@ -49,42 +44,22 @@
             gap: 10px;
         }
         .panel-header h4 { color: #333; font-size: 13px; white-space: nowrap; }
-
         .toggle-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
-            color: #555;
-            padding: 0;
-            flex-shrink: 0;
+            background: none; border: none; cursor: pointer;
+            font-size: 16px; line-height: 1; color: #555; padding: 0; flex-shrink: 0;
         }
-
         .panel-body {
             padding: 0 14px 10px 14px;
             transition: max-height 0.25s ease, opacity 0.25s ease;
-            max-height: 200px;
-            opacity: 1;
+            max-height: 220px; opacity: 1;
         }
         .panel-body.collapsed {
-            max-height: 0;
-            opacity: 0;
-            padding-bottom: 0;
-            pointer-events: none;
+            max-height: 0; opacity: 0; padding-bottom: 0; pointer-events: none;
         }
 
-        /* ── Filtros ── */
         #filtros { top: 10px; right: 10px; }
-        #filtros label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 4px;
-            cursor: pointer;
-        }
+        #filtros label { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; cursor: pointer; }
 
-        /* ── Leyenda ── */
         #leyenda { bottom: 30px; right: 10px; }
         #leyenda .panel-body { line-height: 1.8; }
         .leyenda-item { display: flex; align-items: center; gap: 8px; }
@@ -95,23 +70,15 @@
             flex-shrink: 0;
         }
 
-        /* ── MÓVIL (≤ 520px) ── */
         @media (max-width: 520px) {
-            #contador {
-                top: 8px;
-                left: 46px;
-                font-size: 11px;
-                padding: 6px 10px;
-                max-width: calc(100vw - 120px);
-            }
-            #filtros { top: 8px; right: 8px; max-width: 165px; }
-            #leyenda { bottom: 20px; right: 8px; max-width: 160px; }
+            #contador { top: 8px; left: 46px; font-size: 11px; padding: 6px 10px; max-width: calc(100vw - 120px); }
+            #filtros  { top: 8px; right: 8px; max-width: 165px; }
+            #leyenda  { bottom: 20px; right: 8px; max-width: 160px; }
         }
     </style>
 </head>
 <body>
     <div id="mapa"></div>
-
     <div id="contador">Cargando inspecciones...</div>
 
     <!-- Filtros -->
@@ -121,9 +88,10 @@
             <button class="toggle-btn" id="btn-filtros">▲</button>
         </div>
         <div class="panel-body" id="body-filtros">
-            <label><input type="checkbox" id="chk-activa" checked> <span style="color:#2a9d2a">● Activa</span></label>
+            <label><input type="checkbox" id="chk-activa"    checked> <span style="color:#2a9d2a">● Activa</span></label>
             <label><input type="checkbox" id="chk-porvencer" checked> <span style="color:#e6a800">● Por vencer</span></label>
-            <label><input type="checkbox" id="chk-vencida" checked> <span style="color:#cc2200">● Vencida</span></label>
+            <label><input type="checkbox" id="chk-vencida"   checked> <span style="color:#cc2200">● Vencida</span></label>
+            <label><input type="checkbox" id="chk-vista"     checked> <span style="color:#6E6E6E">● Vista</span></label>
         </div>
     </div>
 
@@ -137,6 +105,7 @@
             <div class="leyenda-item"><div class="dot" style="background:#2ecc40"></div> Activa</div>
             <div class="leyenda-item"><div class="dot" style="background:#ffcc00"></div> Por vencer</div>
             <div class="leyenda-item"><div class="dot" style="background:#e74c3c"></div> Vencida</div>
+            <div class="leyenda-item"><div class="dot" style="background:#6E6E6E"></div> Vista</div>
         </div>
     </div>
 
@@ -144,15 +113,12 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script>
 
-    // ── Toggle de paneles ────────────────────────────────────────
     function togglePanel(id) {
         const body = document.getElementById('body-' + id);
         const btn  = document.getElementById('btn-' + id);
-        const collapsed = body.classList.toggle('collapsed');
-        btn.textContent = collapsed ? '▼' : '▲';
+        btn.textContent = body.classList.toggle('collapsed') ? '▼' : '▲';
     }
 
-    // En móvil, colapsar paneles al inicio
     if (window.innerWidth <= 520) {
         ['filtros', 'leyenda'].forEach(function(id) {
             document.getElementById('body-' + id).classList.add('collapsed');
@@ -162,8 +128,8 @@
 
     // ── CONFIG ───────────────────────────────────────────────────
     const CONFIG = {
-        urlCatastro: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv",
-        urlInspecciones: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTDrgE5VcrC_o0uz_RYnD9Xdg7-DB9qpWjpQboicHLpikmxyDrB6cJXP71vIhsnb5xrkd8cXcySzHmw/pub?output=csv",
+        urlCatastro:    "https://docs.google.com/spreadsheets/d/e/2PACX-1vR818ZjL3LrLFIwrl20srepq4-rhlfYMedQGlt5upQg1y7MlS9DpBbll1wGhGZULMMEqZv_cBvwgsz3/pub?output=csv",
+        urlInspecciones:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTDrgE5VcrC_o0uz_RYnD9Xdg7-DB9qpWjpQboicHLpikmxyDrB6cJXP71vIhsnb5xrkd8cXcySzHmw/pub?output=csv",
         vigenciaMeses: 4,
         diasAlerta: 90,
         centro: [-31.255, -61.49],
@@ -172,7 +138,6 @@
 
     // ── Mapa ─────────────────────────────────────────────────────
     const mapa = L.map('mapa', { preferCanvas: true }).setView(CONFIG.centro, CONFIG.zoom);
-
     const baseMaps = {
         "Satelital": L.tileLayer(
             'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}',
@@ -183,12 +148,16 @@
             { attribution: 'Leaflet | IGN + OpenStreetMap', minZoom: 3, maxZoom: 25 }
         )
     };
-
     baseMaps["Satelital"].addTo(mapa);
     L.control.layers(baseMaps, null, { position: 'topleft', collapsed: false }).addTo(mapa);
 
-    // ── Capas ────────────────────────────────────────────────────
-    const capas = { activa: L.layerGroup(), porvencer: L.layerGroup(), vencida: L.layerGroup() };
+    // ── Capas (incluye "vista") ───────────────────────────────────
+    const capas = {
+        activa:    L.layerGroup(),
+        porvencer: L.layerGroup(),
+        vencida:   L.layerGroup(),
+        vista:     L.layerGroup()
+    };
     Object.values(capas).forEach(c => c.addTo(mapa));
 
     // ── Helpers ──────────────────────────────────────────────────
@@ -202,13 +171,19 @@
         return new Date(str);
     }
 
-    function calcularEstado(fechaEmision) {
+    // esVista viene de cada fila: insp.vista === "si"
+    function calcularEstado(fechaEmision, esVista) {
         if (!fechaEmision || isNaN(fechaEmision)) return null;
+
+        // "vista:si" tiene prioridad sobre cualquier estado de vencimiento
+        if (esVista) return { estado: "vista", color: "#6E6E6E", texto: "Vista" };
+
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         const vencimiento = new Date(fechaEmision);
         vencimiento.setMonth(vencimiento.getMonth() + CONFIG.vigenciaMeses);
         const diasRestantes = Math.floor((vencimiento - hoy) / 86400000);
+
         if (diasRestantes < 0)                  return { estado: "vencida",   color: "#e74c3c", texto: "Vencida" };
         if (diasRestantes <= CONFIG.diasAlerta) return { estado: "porvencer", color: "#ffcc00", texto: "Por vencer" };
         return                                         { estado: "activa",    color: "#2ecc40", texto: "Activa" };
@@ -249,7 +224,7 @@
 
     function dibujarInspecciones(inspecciones, coordsMap) {
         let total = 0, sinCoords = 0;
-        const conteo = { activa: 0, porvencer: 0, vencida: 0 };
+        const conteo = { activa: 0, porvencer: 0, vencida: 0, vista: 0 };
         Object.values(capas).forEach(c => c.clearLayers());
 
         const popupAncho = window.innerWidth <= 520 ? 190 : 210;
@@ -262,7 +237,10 @@
             const fechaEmision = parsearFecha(insp.fechanotificacion);
             if (!fechaEmision || fechaEmision.getFullYear() !== 2026) return;
 
-            const estadoInfo = calcularEstado(fechaEmision);
+            // Leer campo "vista" de cada fila
+            const esVista = String(insp.vista || "").trim().toLowerCase() === "si";
+
+            const estadoInfo = calcularEstado(fechaEmision, esVista);
             if (!estadoInfo) return;
 
             total++;
@@ -276,6 +254,7 @@
                     <b>Titular:</b> ${insp.titular || "S/D"}<br>
                     <b>Dirección:</b> ${insp.direccion || "S/D"}<br>
                     <b>Rubro:</b> ${insp.rubro || "S/D"}<br>
+                    <b>Vista:</b> ${insp.vista || "S/D"}<br>
                     <b>Comentarios:</b> ${insp.comentarios || "S/D"}<br>
                     <hr style="margin:6px 0; border-color:#eee">
                     <b>Catastro:</b> ${idCatastro}<br>
@@ -301,13 +280,15 @@
                 `<b>${total}</b> insp. — ` +
                 `<span style="color:#2a9d2a">A:${conteo.activa}</span> · ` +
                 `<span style="color:#b8960a">V:${conteo.porvencer}</span> · ` +
-                `<span style="color:#cc2200">X:${conteo.vencida}</span>`;
+                `<span style="color:#cc2200">X:${conteo.vencida}</span> · ` +
+                `<span style="color:#6E6E6E">V:${conteo.vista}</span>`;
         } else {
             document.getElementById('contador').innerHTML =
                 `<b>${total}</b> inspecciones — ` +
                 `<span style="color:#2a9d2a">● ${conteo.activa} activas</span> · ` +
                 `<span style="color:#b8960a">● ${conteo.porvencer} por vencer</span> · ` +
-                `<span style="color:#cc2200">● ${conteo.vencida} vencidas</span>` +
+                `<span style="color:#cc2200">● ${conteo.vencida} vencidas</span> · ` +
+                `<span style="color:#6E6E6E">● ${conteo.vista} vistas</span>` +
                 (sinCoords > 0 ? ` · <span style="color:#999">${sinCoords} sin coordenadas</span>` : "");
         }
     }
@@ -321,6 +302,9 @@
     });
     document.getElementById('chk-vencida').addEventListener('change', function() {
         this.checked ? capas.vencida.addTo(mapa) : mapa.removeLayer(capas.vencida);
+    });
+    document.getElementById('chk-vista').addEventListener('change', function() {
+        this.checked ? capas.vista.addTo(mapa) : mapa.removeLayer(capas.vista);
     });
 
     // ── Geolocalización ──────────────────────────────────────────
@@ -361,11 +345,7 @@
         console.warn("Este navegador no soporta geolocalización.");
     }
 
-    // ── Arrancar ─────────────────────────────────────────────────
     cargarDatos();
     </script>
 </body>
 </html>
-
-
-
