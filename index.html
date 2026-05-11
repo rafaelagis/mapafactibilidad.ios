@@ -71,7 +71,7 @@
         }
         .square {
             width: 12px; height: 12px;
-            border-radius: 0%;
+            border-radius: 0px;
             border: 1.5px solid rgba(0,0,0,0.3);
             flex-shrink: 0;
         }
@@ -97,7 +97,7 @@
             <label><input type="checkbox" id="chk-activa"    checked> <span style="color:#2a9d2a">● Activa</span></label>
             <label><input type="checkbox" id="chk-porvencer" checked> <span style="color:#e6a800">● Por vencer</span></label>
             <label><input type="checkbox" id="chk-vencida"   checked> <span style="color:#cc2200">● Vencida</span></label>
-            <label><input type="checkbox" id="chk-vista"     checked> <span style="color:#4588F5">● Vista</span></label>
+            <label><input type="checkbox" id="chk-vista"     checked> <span style="color:#6E6E6E">● Vista</span></label>
         </div>
     </div>
 
@@ -111,7 +111,7 @@
             <div class="leyenda-item"><div class="dot" style="background:#2ecc40"></div> Activa</div>
             <div class="leyenda-item"><div class="dot" style="background:#ffcc00"></div> Por vencer</div>
             <div class="leyenda-item"><div class="dot" style="background:#e74c3c"></div> Vencida</div>
-            <div class="leyenda-item"><div class="square" style="background:#4588F5"></div> Vista</div>
+            <div class="leyenda-item"><div class="square" style="background:#6E6E6E"></div> Vista</div>
         </div>
     </div>
 
@@ -182,7 +182,7 @@
         if (!fechaEmision || isNaN(fechaEmision)) return null;
 
         // "vista:si" tiene prioridad sobre cualquier estado de vencimiento
-        if (esVista) return { estado: "vista", color: "#4588F5", texto: "Vista" };
+        if (esVista) return { estado: "vista", color: "#6E6E6E", texto: "Vista" };
 
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
@@ -287,14 +287,14 @@
                 `<span style="color:#2a9d2a">A:${conteo.activa}</span> · ` +
                 `<span style="color:#b8960a">V:${conteo.porvencer}</span> · ` +
                 `<span style="color:#cc2200">X:${conteo.vencida}</span> · ` +
-                `<span style="color:#4588F5">V:${conteo.vista}</span>`;
+                `<span style="color:#6E6E6E">V:${conteo.vista}</span>`;
         } else {
             document.getElementById('contador').innerHTML =
                 `<b>${total}</b> inspecciones — ` +
                 `<span style="color:#2a9d2a">● ${conteo.activa} activas</span> · ` +
                 `<span style="color:#b8960a">● ${conteo.porvencer} por vencer</span> · ` +
                 `<span style="color:#cc2200">● ${conteo.vencida} vencidas</span> · ` +
-                `<span style="color:#4588F5">● ${conteo.vista} vistas</span>` +
+                `<span style="color:#6E6E6E">● ${conteo.vista} vistas</span>` +
                 (sinCoords > 0 ? ` · <span style="color:#999">${sinCoords} sin coordenadas</span>` : "");
         }
     }
